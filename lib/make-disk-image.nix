@@ -47,7 +47,7 @@ let
     findutils
   ] ++ cfg.extraDependencies;
   preVM = ''
-    ${lib.concatMapStringsSep "\n" (disk: "${pkgs.qemu}/bin/qemu-img create -f ${imageFormat} ${disk.imageName}.${imageFormat} ${disk.imageSize}") (lib.attrValues diskoCfg.devices.disk)}
+    ${lib.concatMapStringsSep "\n" (disk: "${vmTools.hostPkgs.qemu}/bin/qemu-img create -f ${imageFormat} ${disk.imageName}.${imageFormat} ${disk.imageSize}") (lib.attrValues diskoCfg.devices.disk)}
     # This makes disko work, when canTouchEfiVariables is set to true.
     # Technically these boot entries will no be persisted this way, but
     # in most cases this is OK, because we can rely on the standard location for UEFI executables.
@@ -117,9 +117,9 @@ in
     }
     (partitioner + installer));
 
-  system.build.diskoImagesScript = diskoLib.writeCheckedBash { inherit checked pkgs; } cfg.name ''
+  system.build.diskoImagesScript = diskoLib.writeCheckedBash { inherit checked; pkgs = vmTools.hostPkgs; } cfg.name ''
     set -efu
-    export PATH=${lib.makeBinPath dependencies}
+    export PATH=${lib.makeBinPath (with vmTools.hostPkgs; [ coreutils ])}
     showUsage() {
     cat <<\USAGE
     Usage: $script [options]
@@ -177,7 +177,7 @@ in
       shift
     done
 
-    export preVM=${diskoLib.writeCheckedBash { inherit pkgs checked; } "preVM.sh" ''
+    export preVM=${diskoLib.writeCheckedBash { inherit checked; pkgs = vmTools.hostPkgs; } "preVM.sh" ''
       set -efu
       mv copy_before_disko copy_after_disko xchg/
       origBuilder=${pkgs.writeScript "disko-builder" ''
@@ -203,14 +203,14 @@ in
       echo "export origBuilder=$origBuilder" > xchg/saved-env
       ${preVM}
     ''}
-    export postVM=${diskoLib.writeCheckedBash { inherit pkgs checked; } "postVM.sh" postVM}
+    export postVM=${diskoLib.writeCheckedBash { inherit checked; pkgs = vmTools.hostPkgs; } "postVM.sh" postVM}
 
     build_memory=''${build_memory:-${builtins.toString diskoCfg.memSize}}
     QEMU_OPTS=${lib.escapeShellArg QEMU_OPTS}
     QEMU_OPTS+=" -m $build_memory"
     export QEMU_OPTS
 
-    ${pkgs.bash}/bin/sh -e ${vmTools.vmRunCommand vmTools.qemuCommandLinux}
+    ${vmTools.hostPkgs.bash}/bin/sh -e ${vmTools.vmRunCommand vmTools.qemuCommandLinux}
     cd /
   '';
 }

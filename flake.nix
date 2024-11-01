@@ -6,7 +6,9 @@
   #inputs.nixpkgs.url = "nixpkgs";
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-  outputs = { self, nixpkgs, ... }:
+  inputs.nixpkgs-vmtools.url = "github:felixscheinost/nixpkgs/runInLinuxVM-add-hostPkgs";
+
+  outputs = { self, nixpkgs, nixpkgs-vmtools, ... }:
     let
       lib = nixpkgs.lib;
       supportedSystems = [
@@ -22,7 +24,17 @@
     in
     {
       nixosModules.default = self.nixosModules.disko; # convention
-      nixosModules.disko.imports = [ ./module.nix ];
+      nixosModules.disko = {
+        imports = [ ./module.nix ];
+        nixpkgs.overlays = [
+          (final: prev: {
+            # Patched vmTools which supports `hostPkgs` but override pkgs and lib so that we keep using 24.05 kernel, not nixpkgs/master
+            vmTools = nixpkgs-vmtools.legacyPackages.${final.system}.vmTools.override {
+            inherit (final) pkgs lib;
+            };
+          })
+        ];
+      };
       lib = import ./lib {
         inherit (nixpkgs) lib;
       };

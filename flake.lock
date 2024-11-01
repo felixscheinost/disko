@@ -16,9 +16,26 @@
         "type": "github"
       }
     },
+    "nixpkgs-vmtools": {
+      "locked": {
+        "lastModified": 1730488339,
+        "narHash": "sha256-v6P9mhkcUWj6G167Hb9EDJEbyhoujG6rgU6OUHr0VfQ=",
+        "owner": "felixscheinost",
+        "repo": "nixpkgs",
+        "rev": "dc0026e2fbde2de87156a846f5298531e7b96c47",
+        "type": "github"
+      },
+      "original": {
+        "owner": "felixscheinost",
+        "ref": "runInLinuxVM-add-hostPkgs",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "nixpkgs-vmtools": "nixpkgs-vmtools"
       }
     }
   },
